@@ -5,7 +5,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Simon Caplette"]
   gem.description   = %q{Run your features faster}
   gem.summary       = %q{Run one cucumber process per features directory}
-  gem.homepage      = ""
+  gem.homepage      = "https://github.com/simcap/multicuke"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
