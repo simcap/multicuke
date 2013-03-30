@@ -47,9 +47,12 @@ module Multicuke
       features_dirs_to_run.each { |dir_name|
         File.open(File.join(reports_path, "#{dir_name}.html")) { |file|
           content = file.read
-          duration = content.match(/Finished in\s+<\w+>(.*?)</).captures.first
-          scenarios = content.match(/\d+ scenarios? \((.*?)\)/).captures.first
-          steps = content.match(/\d+ steps? \((.*?)\)/).captures.first
+          duration_match = content.match(/Finished in\s+<\w+>(.*?)</)
+          duration = duration_match ? duration_match.captures.first : ""
+          scenarios_match = content.match(/\d+ scenarios? \((.*?)\)/)
+          scenarios =  scenarios_match ? scenarios_match.captures.first : ""
+          steps_match = content.match(/\d+ steps? \((.*?)\)/)
+          steps =  steps_match ? steps_match.captures.first : ""
           failed = (scenarios.include?"failed") || (steps.include?"failed")
         
           features[dir_name] = OpenStruct.new(:scenarios => scenarios, :steps => steps, :duration => duration, :failed? => failed)
