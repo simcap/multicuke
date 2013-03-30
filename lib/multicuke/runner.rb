@@ -1,5 +1,7 @@
 require 'fileutils'
 require 'builder'
+require 'nokogiri'
+require 'ostruct'
 
 module Multicuke
   
@@ -40,6 +42,20 @@ module Multicuke
         }
       end
 
+      features = {}
+
+      features_dirs_to_run.each { |dir_name|
+        File.open(File.join(reports_path, "#{dir_name}.html")) { |file|
+          content = file.read
+          duration = content.match(/Finished in\s+<\w+>(.*?)</).captures.first
+          scenarios = content.match(/\d+ scenarios? \((.*?)\)/).captures.first
+          steps = content.match(/\d+ steps? \((.*?)\)/).captures.first
+        
+          features[dir_name] = OpenStruct.new(:scenarios => scenarios, :steps => steps, :duration => duration)
+        }
+
+      }
+
       b = Builder::XmlMarkup.new :target => index_file, :indent => 2
       b.html {
         b.head { 
@@ -47,9 +63,14 @@ module Multicuke
           b.style(css_content)
         }
         b.body {
+          b.h2("Features")
           b.ul {
             features_dirs_to_run.each { |dir_name|
-                b.li { b.a(dir_name, :href => "#{dir_name}.html") }              
+                b.li { 
+                  b.a(dir_name, :href => "#{dir_name}.html") 
+                  b.span("[#{features[dir_name].duration}]", :class => "duration")                              
+                  b.span("Scenarios: #{features[dir_name].scenarios}, Steps: #{features[dir_name].steps}")
+                }              
             }
           }
         }
@@ -62,7 +83,11 @@ module Multicuke
 
     def css_content
       <<-CSS       
-        body { }
+        body {font-family: "Lucida Grande", Helvetica, sans-serif; margin: 2em 8em 2em 8em;}
+        ul {list-style-type: square;} 
+        li {margin: 1em 0 1em 0;}
+        li span {float: right; margin-left: 1em;}
+        .duration {font-family: ‘Lucida Console’, Monaco, monospace;}
       CSS
     end
 

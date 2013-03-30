@@ -17,6 +17,11 @@ module Multicuke
       File.should exist("#{RESULTS_DIR_PATH}/cucumber_reports/division.html")
       File.should exist("#{RESULTS_DIR_PATH}/cucumber_reports/multiplication.html")
       File.should exist("#{RESULTS_DIR_PATH}/cucumber_reports/substraction.html")
+    
+      File.open("#{RESULTS_DIR_PATH}/cucumber_reports/index.html") { |file|
+        content = file.read
+        content.should match /.*Scenarios: 1 failed, Steps: 1 failed, 3 passed.*/i
+      }
     end
 
   end
