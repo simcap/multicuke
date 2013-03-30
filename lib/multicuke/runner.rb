@@ -8,12 +8,13 @@ module Multicuke
     attr_accessor :features_dir_path
     attr_accessor :output_dir_name
     attr_accessor :output_path
-    attr_accessor :excluded_dirs, :reports_path
+    attr_accessor :excluded_dirs, :reports_path, :dry_run
     attr_reader :features_dirs_to_run
 
     def initialize
       yield self if block_given?
 
+      @dry_run = false if dry_run.nil?
       @output_dir_name = "cucumber_reports" unless output_dir_name
       @output_path = "" unless output_path
       @excluded_dirs = [] unless excluded_dirs
@@ -24,6 +25,20 @@ module Multicuke
       FileUtils.mkdir_p reports_path
       index_file_path = File.join(reports_path, "index.html")
       index_file = File.new(index_file_path, "w")
+
+      unless dry_run
+        features_dirs_to_run.each { |dir_name|
+          report_file_path = File.join(reports_path, "#{dir_name}.html")
+          feature_full_path = File.join(features_dir_path, "#{dir_name}")
+          fork {
+            command = "bundle exec cucumber #{feature_full_path} -r #{features_dir_path} --format html --out #{report_file_path}"
+            p "RUNNING #{command}"
+            system command
+          } 
+
+          p Process.waitall         
+        }
+      end
 
       b = Builder::XmlMarkup.new :target => index_file, :indent => 2
       b.html {
