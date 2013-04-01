@@ -10,7 +10,7 @@ module Multicuke
     
     it "generates index file in output folder" do
       runner = Multicuke::Runner.new do |r|
-        r.features_dir_path = File.expand_path("../features", __FILE__)
+        r.features_root_path = File.expand_path("../features", __FILE__)
         r.output_dir_name = "cuke_reports"
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
@@ -25,7 +25,7 @@ module Multicuke
 
     it "write link to each features on index file" do
       runner = Multicuke::Runner.new do |r|
-        r.features_dir_path = File.expand_path("../features", __FILE__)
+        r.features_root_path = File.expand_path("../features", __FILE__)
         r.excluded_dirs = ["steps_definition"]
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH

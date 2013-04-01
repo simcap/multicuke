@@ -1,7 +1,6 @@
 require 'fileutils'
 require 'builder'
 require 'nokogiri'
-require 'ostruct'
 
 module Multicuke
 
@@ -40,10 +39,23 @@ module Multicuke
 
   class Runner
 
-    attr_accessor :features_dir_path
+    # Root path to your features directory
+    attr_accessor :features_root_path
+
+    # Optional name for directory containing the reports
     attr_accessor :output_dir_name
+
+    # Optional full path for generated reports. Default to where it is run from.
     attr_accessor :output_path
-    attr_accessor :excluded_dirs, :reports_path, :dry_run
+
+    # Optional features directories to exclude
+    attr_accessor :excluded_dirs
+
+    # Full final path where html reports will be generated
+    attr_reader :reports_path
+
+    # Optional. If true will generate index file but not launch processes. Used for testing.
+    attr_accessor :dry_run
 
     def initialize
       yield self if block_given?
@@ -57,15 +69,20 @@ module Multicuke
 
     def start
       FileUtils.mkdir_p reports_path
-      index_file_path = File.join(reports_path, "index.html")
-      index_file = File.new(index_file_path, "w")
+      launch_process_per_dir
+      collect_results
+      build_index
+    end
 
+    private
+
+    def launch_process_per_dir
       unless dry_run
         features_dirs.each { |features_dir|
           report_file_path = File.join(reports_path, "#{features_dir.name}.html")
-          feature_full_path = File.join(features_dir_path, "#{features_dir.name}")
+          feature_full_path = File.join(features_root_path, "#{features_dir.name}")
           fork {
-            command = "bundle exec cucumber #{feature_full_path} -r #{features_dir_path} --format html --out #{report_file_path}"
+            command = "bundle exec cucumber #{feature_full_path} -r #{features_root_path} --format html --out #{report_file_path}"
             p "RUNNING #{command}"
             system command
           } 
@@ -73,7 +90,9 @@ module Multicuke
           p Process.waitall         
         }
       end
+    end
 
+    def collect_results
       features_dirs.each { |features_dir|
         feature_file = File.join(reports_path, "#{features_dir.name}.html")
         File.open(feature_file) { |file|
@@ -92,6 +111,11 @@ module Multicuke
           features_dir.failed = failed
         } if File.exists?(feature_file)
       }
+    end
+
+    def build_index
+      index_file_path = File.join(reports_path, "index.html")
+      index_file = File.new(index_file_path, "w")
 
       b = Builder::XmlMarkup.new :target => index_file, :indent => 2
       b.html {
@@ -116,8 +140,6 @@ module Multicuke
       index_file.close
     end
 
-    private 
-
     def css_content
       <<-CSS       
         body {font-family: "Lucida Grande", Helvetica, sans-serif; margin: 2em 8em 2em 8em;}
@@ -140,7 +162,7 @@ module Multicuke
 
     def find_features_dirs
       @features_dirs = []
-      Dir.glob(File.join(features_dir_path, "*")).reject{ |path|
+      Dir.glob(File.join(features_root_path, "*")).reject{ |path|
         File.file?(path) || match_excluded_dirs(path)
       }.map { |feature_path|
         File.basename(feature_path)
