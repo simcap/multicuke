@@ -36,10 +36,11 @@ module Multicuke
       File.open("#{RESULTS_DIR_PATH}/cucumber_reports/index.html") { |file|
         content = file.read
         content.should match /.*Cucumber reports.*/
-        content.should match /.*<a href="addition.html">addition<\/a>.*/
-        content.should match /.*<a href="substraction.html">substraction<\/a>.*/
-        content.should match /.*<a href="division.html">division<\/a>.*/
-        content.should match /.*<a href="multiplication.html">multiplication<\/a>.*/
+        content.should match /.*<a href="addition.html">Addition<\/a>.*/
+        content.should match /.*<a href="substraction.html">Substraction<\/a>.*/
+        content.should match /.*<a href="division.html">Division<\/a>.*/
+        content.should match /.*<a href="bad_addition.html">Bad addition<\/a>.*/
+        content.should match /.*<a href="multiplication.html">Multiplication<\/a>.*/
         content.should_not match /.*steps_definition.*/
       }
     end

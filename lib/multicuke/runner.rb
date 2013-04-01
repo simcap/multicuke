@@ -4,7 +4,40 @@ require 'nokogiri'
 require 'ostruct'
 
 module Multicuke
-  
+
+  # Set of features under one specific directory
+  class FeaturesDir
+
+    # Directory name fo the features
+    attr_reader :name
+
+    # Result string for passed/failed scenarios
+    attr_accessor :scenarios_results
+
+    # Result string for passed/failed steps
+    attr_accessor :steps_results
+
+    # Running time in ms for all features in this feature directory
+    attr_accessor :duration
+
+    # True if a scenario or step has failed for this set of features
+    attr_writer :failed
+
+    def initialize(dir_name)
+      @name = dir_name
+      @failed = false
+    end
+
+    def failed?
+      @failed
+    end
+
+    def human_name
+      name.gsub(/[_-]/, " ").capitalize
+    end
+    
+  end
+
   class Runner
 
     attr_accessor :features_dir_path
@@ -28,9 +61,9 @@ module Multicuke
       index_file = File.new(index_file_path, "w")
 
       unless dry_run
-        features_group.each_key { |features_group_name|
-          report_file_path = File.join(reports_path, "#{features_group_name}.html")
-          feature_full_path = File.join(features_dir_path, "#{features_group_name}")
+        features_dirs.each { |features_dir|
+          report_file_path = File.join(reports_path, "#{features_dir.name}.html")
+          feature_full_path = File.join(features_dir_path, "#{features_dir.name}")
           fork {
             command = "bundle exec cucumber #{feature_full_path} -r #{features_dir_path} --format html --out #{report_file_path}"
             p "RUNNING #{command}"
@@ -41,8 +74,8 @@ module Multicuke
         }
       end
 
-      features_group.each_key { |features_group_name|
-        feature_file = File.join(reports_path, "#{features_group_name}.html")
+      features_dirs.each { |features_dir|
+        feature_file = File.join(reports_path, "#{features_dir.name}.html")
         File.open(feature_file) { |file|
           content = file.read
           duration_match = content.match(/Finished in\s+<\w+>(.*?)</)
@@ -53,7 +86,10 @@ module Multicuke
           steps =  steps_match ? steps_match.captures.first : ""
           failed = (scenarios.include?"failed") || (steps.include?"failed")
         
-          features_group[features_group_name] = OpenStruct.new(:scenarios => scenarios, :steps => steps, :duration => duration, :failed? => failed)
+          features_dir.scenarios_results = scenarios
+          features_dir.steps_results = steps
+          features_dir.duration = duration
+          features_dir.failed = failed
         } if File.exists?(feature_file)
       }
 
@@ -66,11 +102,11 @@ module Multicuke
         b.body {
           b.h2("Features")
           b.ul {
-            features_group.each { |name, feature|
-                b.li(:class => (feature.failed? ? "failed" : "success")) { 
-                  b.a(name, :href => "#{name}.html") 
-                  b.span("[#{feature.duration}]", :class => "duration")                              
-                  b.span("Scenarios: #{feature.scenarios}, Steps: #{feature.steps}", :class => "result")
+            features_dirs.each { |features_dir|
+                b.li(:class => (features_dir.failed? ? "failed" : "success")) { 
+                  b.a(features_dir.human_name, :href => "#{features_dir.name}.html") 
+                  b.span("[#{features_dir.duration}]", :class => "duration")                              
+                  b.span("Scenarios: #{features_dir.scenarios_results}, Steps: #{features_dir.steps_results}", :class => "result")
                 }              
             }
           }
@@ -98,20 +134,20 @@ module Multicuke
       path.match(Regexp.new(excluded_dirs.join("|")))
     end
 
-    def features_group
-      @features_group ||= find_features_group
+    def features_dirs
+      @features_dirs ||= find_features_dirs
     end
 
-    def find_features_group
-      @features_group = {}
+    def find_features_dirs
+      @features_dirs = []
       Dir.glob(File.join(features_dir_path, "*")).reject{ |path|
         File.file?(path) || match_excluded_dirs(path)
       }.map { |feature_path|
         File.basename(feature_path)
-      }.each { |feature_name|
-        @features_group[feature_name] = OpenStruct.new(:scenarios => nil, :steps => nil, :duration => nil, :failed? => false)
+      }.each { |dir_name|
+        @features_dirs << FeaturesDir.new(dir_name)
       }
-      @features_group      
+      @features_dirs      
     end
 
   end
