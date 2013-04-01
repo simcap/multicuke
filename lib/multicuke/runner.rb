@@ -26,12 +26,16 @@ module Multicuke
     def initialize(dir_name)
       @name = dir_name
       @failed = false
+      @scenarios_results = ""
+      @steps_results = ""
     end
 
+    # True if one feature has failed
     def failed?
-      @failed
+      (scenarios_results.include?"failed") || (steps_results.include?"failed")
     end
 
+    # Human readable name used for index page (ex: user_logout --> User logout) 
     def human_name
       name.gsub(/[_-]/, " ").capitalize
     end
@@ -108,12 +112,10 @@ module Multicuke
           scenarios =  scenarios_match ? scenarios_match.captures.first : ""
           steps_match = content.match(/\d+ steps? \((.*?)\)/)
           steps =  steps_match ? steps_match.captures.first : ""
-          failed = (scenarios.include?"failed") || (steps.include?"failed")
         
           features_dir.scenarios_results = scenarios
           features_dir.steps_results = steps
           features_dir.duration = duration
-          features_dir.failed = failed
         } if File.exists?(feature_file)
       }
     end
@@ -123,19 +125,16 @@ module Multicuke
     end
 
     def features_dirs
-      @features_dirs ||= find_features_dirs
+      @features_dirs ||= resolve_features_dirs_name
     end
 
-    def find_features_dirs
-      @features_dirs = []
-      Dir.glob(File.join(features_root_path, "*")).reject{ |path|
-        File.file?(path) || match_excluded_dirs(path)
+    def resolve_features_dirs_name
+      Dir.glob(File.join(features_root_path, "*", "*.feature")).reject{ |path|
+        match_excluded_dirs(path)
       }.map { |feature_path|
-        File.basename(feature_path)
-      }.each { |dir_name|
-        @features_dirs << FeaturesDir.new(dir_name)
+        dir_name = File.basename(File.dirname(feature_path))
+        FeaturesDir.new(dir_name)
       }
-      @features_dirs      
     end
 
   end
