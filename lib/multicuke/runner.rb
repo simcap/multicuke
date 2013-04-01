@@ -1,6 +1,7 @@
 require 'fileutils'
 require 'builder'
 require 'nokogiri'
+require 'multicuke/reports_index'
 
 module Multicuke
 
@@ -37,6 +38,8 @@ module Multicuke
     
   end
 
+  # Actual clas that will spawn one command process per directory of features collected
+  # according to configuration
   class Runner
 
     # Root path to your features directory
@@ -71,7 +74,7 @@ module Multicuke
       FileUtils.mkdir_p reports_path
       launch_process_per_dir
       collect_results
-      build_index
+      ReportsIndex.new(reports_path, features_dirs).generate
     end
 
     private
@@ -111,45 +114,6 @@ module Multicuke
           features_dir.failed = failed
         } if File.exists?(feature_file)
       }
-    end
-
-    def build_index
-      index_file_path = File.join(reports_path, "index.html")
-      index_file = File.new(index_file_path, "w")
-
-      b = Builder::XmlMarkup.new :target => index_file, :indent => 2
-      b.html {
-        b.head { 
-          b.title("Cucumber reports") 
-          b.style(css_content)
-        }
-        b.body {
-          b.h2("Features")
-          b.ul {
-            features_dirs.each { |features_dir|
-                b.li(:class => (features_dir.failed? ? "failed" : "success")) { 
-                  b.a(features_dir.human_name, :href => "#{features_dir.name}.html") 
-                  b.span("[#{features_dir.duration}]", :class => "duration")                              
-                  b.span("Scenarios: #{features_dir.scenarios_results}, Steps: #{features_dir.steps_results}", :class => "result")
-                }              
-            }
-          }
-        }
-      }      
-
-      index_file.close
-    end
-
-    def css_content
-      <<-CSS       
-        body {font-family: "Lucida Grande", Helvetica, sans-serif; margin: 2em 8em 2em 8em;}
-        ul {list-style-type: square;} 
-        li {margin: 1em 0 1em 0;}
-        li span {float: right; margin-left: 1em; padding: 0 0.3em;}
-        li.failed span.result{background: #DC6E6E;}
-        li.success span.result{background: #C1E799;}
-        span.duration {color: #999999;}
-      CSS
     end
 
     def match_excluded_dirs(path)
