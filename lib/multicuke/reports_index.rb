@@ -7,13 +7,16 @@ module Multicuke
     # Collection of ran features directories results used for reporting
     attr_reader :features_dirs
 
+    # Full path for the index html file
+    attr_reader :index_path
+
     def initialize(reports_path, features_dirs)
       @features_dirs = features_dirs
-      @index_file_path = File.join(reports_path, "index.html")
+      @index_path = File.join(reports_path, "index.html")
     end
     
     def generate      
-      index_file = File.new(@index_file_path, "w")
+      index_file = File.new(index_path, "w")
 
       b = Builder::XmlMarkup.new :target => index_file, :indent => 2
       b.html {

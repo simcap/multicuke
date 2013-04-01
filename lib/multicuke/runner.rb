@@ -74,7 +74,8 @@ module Multicuke
       FileUtils.mkdir_p reports_path
       launch_process_per_dir
       collect_results
-      ReportsIndex.new(reports_path, features_dirs).generate
+      reports = ReportsIndex.new(reports_path, features_dirs).generate
+      puts "See reports index at #{reports.index_path}" if reports
     end
 
     private
@@ -85,13 +86,14 @@ module Multicuke
           report_file_path = File.join(reports_path, "#{features_dir.name}.html")
           feature_full_path = File.join(features_root_path, "#{features_dir.name}")
           fork {
-            command = "bundle exec cucumber #{feature_full_path} -r #{features_root_path} --format html --out #{report_file_path}"
-            p "RUNNING #{command}"
-            system command
+            main_command = %W[bundle exec cucumber #{feature_full_path}]
+            options = %W[-r #{features_root_path} --format html --out #{report_file_path}]
+            full_command = main_command + options
+            result = system *full_command
+            puts "Features '#{features_dir.name}' finished. #{result ? 'SUCCESS' : 'FAILURE'} (pid: #{Process.pid})"
           } 
-
-          p Process.waitall         
         }
+        Process.waitall
       end
     end
 
