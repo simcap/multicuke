@@ -58,6 +58,9 @@ module Multicuke
     # Optional features directories to exclude
     attr_accessor :excluded_dirs
 
+    # Optional only the features directories to be included
+    attr_accessor :included_only_dirs
+
     # Full final path where html reports will be generated
     attr_reader :reports_path
 
@@ -71,6 +74,7 @@ module Multicuke
       @output_dir_name = "cucumber_reports" unless output_dir_name
       @output_path = "" unless output_path
       @excluded_dirs = [] unless excluded_dirs
+      @included_only_dirs = [] unless included_only_dirs
       @reports_path = File.join(output_path, output_dir_name)
     end
 
@@ -120,21 +124,29 @@ module Multicuke
       }
     end
 
-    def match_excluded_dirs(path)
-      path.match(Regexp.new(excluded_dirs.join("|")))
-    end
-
     def features_dirs
       @features_dirs ||= resolve_features_dirs_name
     end
 
     def resolve_features_dirs_name
-      Dir.glob(File.join(features_root_path, "*", "*.feature")).reject{ |path|
-        match_excluded_dirs(path)
+      Dir.glob(File.join(features_root_path, "*", "*.feature")).select{ |path|
+        configured_dir?(path)
       }.map { |feature_path|
         dir_name = File.basename(File.dirname(feature_path))
         FeaturesDir.new(dir_name)
       }
+    end
+
+    def configured_dir?(path)
+      if included_only_dirs.empty?
+        included_dir?(path)
+      else
+        path.match(Regexp.new(included_only_dirs.join("|")))
+      end
+    end
+
+    def included_dir?(path)
+      excluded_dirs.empty? || (not path.match(Regexp.new(excluded_dirs.join("|"))))
     end
 
   end
