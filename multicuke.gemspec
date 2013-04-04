@@ -13,4 +13,9 @@ Gem::Specification.new do |gem|
   gem.name          = "multicuke"
   gem.require_paths = ["lib"]
   gem.version       = Multicuke::VERSION
+
+  gem.add_dependency 'cucumber'
+  gem.add_dependency 'rspec'
+  gem.add_dependency 'nokogiri'
+
 end
