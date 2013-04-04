@@ -79,6 +79,9 @@ module Multicuke
     # Optional. If true will generate index file but not launch processes. Used for testing.
     attr_accessor :dry_run
 
+    # Add cucumber --require option load *.rb files under features root path by default unless specified to false.
+    attr_accessor :require_features_root_option
+
     # Delegate to a wrapper of system call in order mock/test
     attr_accessor :system_command
 
@@ -86,6 +89,7 @@ module Multicuke
       yield self if block_given?
 
       @dry_run = false if dry_run.nil?
+      @require_features_root_option = true if require_features_root_option.nil?
       @output_dir_name = "cucumber_reports" unless output_dir_name
       @output_path = "" unless output_path
       @excluded_dirs = [] unless excluded_dirs
@@ -112,7 +116,8 @@ module Multicuke
           feature_full_path = File.join(features_root_path, "#{features_dir.name}")
           fork {
             main_command = %W[bundle exec cucumber #{feature_full_path}]
-            options = %W[-r #{features_root_path} --format html --out #{report_file_path}]
+            options = %W[--format html --out #{report_file_path}]
+            options.concat %W[--require #{features_root_path}] if require_features_root_option
             full_command = main_command + options + extra_options
             result = system_command.run full_command
             puts "Features '#{features_dir.name}' finished. #{result ? 'SUCCESS' : 'FAILURE'} (pid: #{Process.pid})"
@@ -151,6 +156,8 @@ module Multicuke
       }.map { |feature_path|
         dir_name = File.basename(File.dirname(feature_path))
         FeaturesDir.new(dir_name)
+      }.uniq { |feature_dir|
+        feature_dir.name
       }
     end
 

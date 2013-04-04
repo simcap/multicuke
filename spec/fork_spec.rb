@@ -25,6 +25,15 @@ module Multicuke
     
       File.open("#{RESULTS_DIR_PATH}/cucumber_reports/index.html") { |file|
         content = file.read
+        content.should match /.*<a href="addition.html">Addition<\/a>.*/
+        content.should match /.*<a href="substraction.html">Substraction<\/a>.*/
+        content.should match /.*<a href="division.html">Division<\/a>.*/
+        content.should match /.*<a href="bad_addition.html">Bad addition<\/a>.*/
+        content.should match /.*<a href="multiplication.html">Multiplication<\/a>.*/
+
+        division_sections = content.scan(/(<a href="division.html">Division<\/a>)/)
+        division_sections.should have(1).items
+
         content.should match /.*Scenarios: 1 failed, Steps: 1 failed, 3 passed.*/i
       }
     end
