@@ -12,6 +12,7 @@ module Multicuke
       runner = Multicuke::Runner.new do |r|
         r.features_root_path = File.expand_path("../features", __FILE__)
         r.excluded_dirs = ["steps_definition"]
+        r.extra_options = ["-t", "~@non_existing_tag"]
         r.output_path = RESULTS_DIR_PATH
       end
 

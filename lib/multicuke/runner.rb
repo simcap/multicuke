@@ -5,6 +5,15 @@ require 'multicuke/reports_index'
 
 module Multicuke
 
+  # Wrapper of {Kernel#system} method for test/mock
+  class SystemCommand
+    
+    def run(full_command_as_array)
+      system *full_command_as_array
+    end    
+    
+  end
+
   # Set of features under one specific directory
   class FeaturesDir
 
@@ -61,11 +70,17 @@ module Multicuke
     # Optional only the features directories to be included
     attr_accessor :included_only_dirs
 
+    # Array of extra options to pass to the command
+    attr_accessor :extra_options
+
     # Full final path where html reports will be generated
     attr_reader :reports_path
 
     # Optional. If true will generate index file but not launch processes. Used for testing.
     attr_accessor :dry_run
+
+    # Delegate to a wrapper of system call in order mock/test
+    attr_accessor :system_command
 
     def initialize
       yield self if block_given?
@@ -75,7 +90,9 @@ module Multicuke
       @output_path = "" unless output_path
       @excluded_dirs = [] unless excluded_dirs
       @included_only_dirs = [] unless included_only_dirs
+      @extra_options = [] unless extra_options
       @reports_path = File.join(output_path, output_dir_name)
+      @system_command = SystemCommand.new unless system_command
     end
 
     def start
@@ -96,8 +113,8 @@ module Multicuke
           fork {
             main_command = %W[bundle exec cucumber #{feature_full_path}]
             options = %W[-r #{features_root_path} --format html --out #{report_file_path}]
-            full_command = main_command + options
-            result = system *full_command
+            full_command = main_command + options + extra_options
+            result = system_command.run full_command
             puts "Features '#{features_dir.name}' finished. #{result ? 'SUCCESS' : 'FAILURE'} (pid: #{Process.pid})"
           } 
         }
@@ -141,7 +158,10 @@ module Multicuke
       if included_only_dirs.empty?
         included_dir?(path)
       else
-        path.match(Regexp.new(included_only_dirs.join("|")))
+        exact_word_match_expressions = included_only_dirs.map { |dir_name|
+          "\\b#{dir_name}\\b"
+        }
+        path.match(Regexp.new(exact_word_match_expressions.join("|")))
       end
     end
 

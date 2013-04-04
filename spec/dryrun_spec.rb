@@ -52,21 +52,22 @@ module Multicuke
     it "run on included dirs only" do
       runner = Multicuke::Runner.new do |r|
         r.features_root_path = File.expand_path("../features", __FILE__)
-        r.included_only_dirs = ["division"]
+        r.included_only_dirs = ["addition"]
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
       end 
 
-      File.should_not exist("#{RESULTS_DIR_PATH}/cuke_reports")
+      File.should_not exist("#{RESULTS_DIR_PATH}/cucumber_reports")
 
       runner.start
       
       File.open("#{RESULTS_DIR_PATH}/cucumber_reports/index.html") { |file|
         content = file.read
 
-        content.should match /.*<a href="division.html">Division<\/a>.*/
+        content.should match /.*<a href="addition.html">Addition<\/a>.*/
 
-        content.should_not match /.*addition.*/i
+        content.should_not match /.*bad_addition.*/i
+        content.should_not match /.*division.*/i
         content.should_not match /.*substraction.*/i
         content.should_not match /.*multiplication.*/i
         content.should_not match /.*steps_definition.*/
