@@ -126,7 +126,11 @@ module Multicuke
             exit(result)
           } 
         }
-        Process.waitall
+        global_exit_status = Process.waitall.inject(0) {|result, process|
+          pid, status = *process
+          result + status.exitstatus
+        }
+        exit(global_exit_status == 0)
       end
     end
 
