@@ -9,8 +9,8 @@ module Multicuke
     end
     
     it "generates index file with hyperlinks to each feature" do
-      runner = Multicuke::Runner.new do |r|
-        r.features_root_path = File.expand_path("../features", __FILE__)
+      features_root = File.expand_path("../features", __FILE__)
+      runner = Multicuke::Runner.new(features_root) do |r|
         r.output_dir_name = "cuke_reports"
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
@@ -33,8 +33,9 @@ module Multicuke
     end
 
     it "do not run on excluded directories and those that do not contains features" do
-      runner = Multicuke::Runner.new do |r|
-        r.features_root_path = File.expand_path("../features", __FILE__)
+      features_root = File.expand_path("../features", __FILE__)
+      runner = Multicuke::Runner.new(features_root) do |r|
+        r.features_root_path = 
         r.excluded_dirs = ["exclude_me_features"]
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
@@ -50,8 +51,8 @@ module Multicuke
     end
 
     it "run on included dirs only" do
-      runner = Multicuke::Runner.new do |r|
-        r.features_root_path = File.expand_path("../features", __FILE__)
+      features_root = File.expand_path("../features", __FILE__)
+      runner = Multicuke::Runner.new(features_root) do |r|
         r.included_only_dirs = ["addition"]
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH

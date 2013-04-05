@@ -55,22 +55,22 @@ module Multicuke
   # according to configuration
   class Runner
 
-    # Root path to your features directory
+    # Root path to your features directory. Ex: your_project/features
     attr_accessor :features_root_path
 
-    # Optional name for directory containing the reports
+    # Optional name for directory containing the reports. Default to 'cucumber_reports'
     attr_accessor :output_dir_name
 
-    # Optional full path for generated reports. Default to where it is run from.
+    # Optional full path for generated reports. Default to ../{features_root_path}.
     attr_accessor :output_path
 
-    # Optional features directories to exclude
+    # Optional regexp for name of features directories to exclude. 
     attr_accessor :excluded_dirs
 
     # Optional only the features directories to be included
     attr_accessor :included_only_dirs
 
-    # Array of extra options to pass to the command
+    # Array of extra options to pass to the command. Ex: ["-p", "my_profile", "--backtrace"]
     attr_accessor :extra_options
 
     # Full final path where html reports will be generated
@@ -85,13 +85,15 @@ module Multicuke
     # Delegate to a wrapper of system call in order mock/test
     attr_accessor :system_command
 
-    def initialize
+    def initialize(features_root)
+      @features_root_path = features_root
+
       yield self if block_given?
 
       @dry_run = false if dry_run.nil?
       @require_features_root_option = true if require_features_root_option.nil?
       @output_dir_name = "cucumber_reports" unless output_dir_name
-      @output_path = "" unless output_path
+      @output_path = File.expand_path("..", features_root_path) unless output_path
       @excluded_dirs = [] unless excluded_dirs
       @included_only_dirs = [] unless included_only_dirs
       @extra_options = [] unless extra_options

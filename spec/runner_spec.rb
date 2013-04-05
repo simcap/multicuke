@@ -4,8 +4,7 @@ module Multicuke
 
   describe Runner do
       it "initializes with provided configuration" do
-        runner = Multicuke::Runner.new do |r|
-          r.features_root_path = "my_feature_path"
+        runner = Multicuke::Runner.new("my_feature_path") do |r|
           r.output_dir_name = "my_reports"
           r.output_path = "my_output_path"
           r.dry_run = true
@@ -24,10 +23,9 @@ module Multicuke
       end
 
       it "initializes with default values" do
-        runner = Multicuke::Runner.new
-
+        runner = Multicuke::Runner.new(File.expand_path("../features", __FILE__))
         runner.output_dir_name.should == "cucumber_reports"
-        runner.output_path.should == ""
+        runner.output_path.should match "multicuke/spec$"
         runner.dry_run.should be_false
         runner.require_features_root_option.should be_true
         runner.excluded_dirs.should be_empty

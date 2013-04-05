@@ -3,8 +3,8 @@ require 'spec_helper'
 describe "System command" do
 
   it "runs 'bundle exec cucumber ...' command" do
-    runner = Multicuke::Runner.new do |r|
-      r.features_root_path = File.expand_path("../features", __FILE__)
+    features_root = File.expand_path("../features", __FILE__)
+    runner = Multicuke::Runner.new(features_root) do |r|
       r.included_only_dirs = ["addition"]
       r.output_path = RESULTS_DIR_PATH
       r.system_command = mock('SystemCommand mock')
