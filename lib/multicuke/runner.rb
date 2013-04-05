@@ -123,6 +123,7 @@ module Multicuke
             full_command = main_command + options + extra_options
             result = system_command.run full_command
             puts "Features '#{features_dir.name}' finished. #{result ? 'SUCCESS' : 'FAILURE'} (pid: #{Process.pid})"
+            exit(result)
           } 
         }
         Process.waitall
