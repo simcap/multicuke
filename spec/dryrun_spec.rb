@@ -4,6 +4,8 @@ module Multicuke
   
   describe "Reporting" do
 
+    let(:system_command_stub) { stub('SystemCommand stub').as_null_object }
+
     after(:each) do
       FileUtils.rm_r(Dir.glob("#{RESULTS_DIR_PATH}/*"), :force => true)
     end
@@ -14,6 +16,7 @@ module Multicuke
         r.output_dir_name = "cuke_reports"
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
+        r.system_command = system_command_stub
       end 
 
       File.should_not exist("#{RESULTS_DIR_PATH}/cuke_reports")
@@ -39,6 +42,7 @@ module Multicuke
         r.excluded_dirs = ["exclude_me_features"]
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
+        r.system_command = system_command_stub
       end 
 
       runner.start
@@ -56,6 +60,7 @@ module Multicuke
         r.included_only_dirs = ["addition"]
         r.dry_run = true
         r.output_path = RESULTS_DIR_PATH
+        r.system_command = system_command_stub
       end 
 
       File.should_not exist("#{RESULTS_DIR_PATH}/cucumber_reports")

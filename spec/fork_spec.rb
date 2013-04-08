@@ -16,7 +16,7 @@ module Multicuke
         r.output_path = RESULTS_DIR_PATH
       end
 
-      runner.start
+      expect{runner.start}.to raise_error SystemExit
       
       File.should exist("#{RESULTS_DIR_PATH}/cucumber_reports/addition.html")
       File.should exist("#{RESULTS_DIR_PATH}/cucumber_reports/division.html")

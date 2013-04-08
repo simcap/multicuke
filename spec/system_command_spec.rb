@@ -11,8 +11,8 @@ describe "System command" do
     end
 
     runner.should_receive(:fork)
+    runner.system_command.should_receive(:exit).with(0)
     runner.start
-
   end
 
 end

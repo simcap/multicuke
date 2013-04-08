@@ -1,6 +1,3 @@
-require 'fileutils'
-require 'builder'
-require 'nokogiri'
 require 'multicuke/reports_index'
 
 module Multicuke
@@ -11,6 +8,10 @@ module Multicuke
     def run(full_command_as_array)
       system *full_command_as_array
     end    
+
+    def exit(status = 0)
+      Kernel.exit(status == 0)
+    end
     
   end
 
@@ -103,16 +104,19 @@ module Multicuke
 
     def start
       FileUtils.mkdir_p reports_path
-      launch_process_per_dir
+      exit_status = launch_process_per_dir
       collect_results
       reports = ReportsIndex.new(reports_path, features_dirs).generate
       puts "See reports index at #{reports.index_path}" if reports
+      system_command.exit(exit_status)
     end
 
     private
 
     def launch_process_per_dir
-      unless dry_run
+      if dry_run
+        0
+      else
         features_dirs.each { |features_dir|
           report_file_path = File.join(reports_path, "#{features_dir.name}.html")
           feature_full_path = File.join(features_root_path, "#{features_dir.name}")
@@ -130,7 +134,6 @@ module Multicuke
           pid, status = *process
           result + status.exitstatus
         }
-        exit(global_exit_status == 0)
       end
     end
 
