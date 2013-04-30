@@ -10,7 +10,6 @@ describe "System command" do
       r.system_command = mock('SystemCommand mock')
     end
 
-    runner.should_receive(:fork)
     runner.system_command.should_receive(:exit).with(0)
     runner.start
   end

@@ -4,15 +4,15 @@ module Multicuke
 
   # Wrapper of {Kernel#system} method for test/mock
   class SystemCommand
-    
+
     def run(full_command_as_array)
       system *full_command_as_array
-    end    
+    end
 
     def exit(status = 0)
       Kernel.exit(status == 0)
     end
-    
+
   end
 
   # Set of features under one specific directory
@@ -45,11 +45,11 @@ module Multicuke
       (scenarios_results.include?"failed") || (steps_results.include?"failed")
     end
 
-    # Human readable name used for index page (ex: user_logout --> User logout) 
+    # Human readable name used for index page (ex: user_logout --> User logout)
     def human_name
       name.gsub(/[_-]/, " ").capitalize
     end
-    
+
   end
 
   # Actual clas that will spawn one command process per directory of features collected
@@ -65,7 +65,7 @@ module Multicuke
     # Optional full path for generated reports. Default to ../{features_root_path}.
     attr_accessor :output_path
 
-    # Optional regexp for name of features directories to exclude. 
+    # Optional regexp for name of features directories to exclude.
     attr_accessor :excluded_dirs
 
     # Optional only the features directories to be included
@@ -73,6 +73,9 @@ module Multicuke
 
     # Array of extra options to pass to the command. Ex: ["-p", "my_profile", "--backtrace"]
     attr_accessor :extra_options
+
+    # Define the size for the pool of forks. Default is 5
+    attr_accessor :forks_pool_size
 
     # Full final path where html reports will be generated
     attr_reader :reports_path
@@ -92,14 +95,15 @@ module Multicuke
       yield self if block_given?
 
       @dry_run = false if dry_run.nil?
+      @forks_pool_size ||= 5
       @require_features_root_option = true if require_features_root_option.nil?
       @output_dir_name = "cucumber_reports" unless output_dir_name
       @output_path = File.expand_path("..", features_root_path) unless output_path
-      @excluded_dirs = [] unless excluded_dirs
-      @included_only_dirs = [] unless included_only_dirs
-      @extra_options = [] unless extra_options
+      @excluded_dirs ||= []
+      @included_only_dirs ||= []
+      @extra_options ||= []
       @reports_path = File.join(output_path, output_dir_name)
-      @system_command = SystemCommand.new unless system_command
+      @system_command ||= SystemCommand.new
     end
 
     def start
@@ -117,10 +121,9 @@ module Multicuke
       if dry_run
         0
       else
-        features_dirs.each { |features_dir|
-          report_file_path = File.join(reports_path, "#{features_dir.name}.html")
-          feature_full_path = File.join(features_root_path, "#{features_dir.name}")
-          fork {
+        features_dirs.forkoff!(:processes => forks_pool_size){ |features_dir|
+            report_file_path = File.join(reports_path, "#{features_dir.name}.html")
+            feature_full_path = File.join(features_root_path, "#{features_dir.name}")
             main_command = %W[bundle exec cucumber #{feature_full_path}]
             options = %W[--format html --out #{report_file_path}]
             options.concat %W[--require #{features_root_path}] if require_features_root_option
@@ -128,8 +131,8 @@ module Multicuke
             result = system_command.run full_command
             puts "Features '#{features_dir.name}' finished. #{result ? 'SUCCESS' : 'FAILURE'} (pid: #{Process.pid})"
             exit(result)
-          } 
         }
+
         global_exit_status = Process.waitall.inject(0) {|result, process|
           pid, status = *process
           result + status.exitstatus
@@ -148,7 +151,7 @@ module Multicuke
           scenarios =  scenarios_match ? scenarios_match.captures.first : ""
           steps_match = content.match(/\d+ steps? \((.*?)\)/)
           steps =  steps_match ? steps_match.captures.first : ""
-        
+
           features_dir.scenarios_results = scenarios
           features_dir.steps_results = steps
           features_dir.duration = duration
