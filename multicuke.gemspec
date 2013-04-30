@@ -17,5 +17,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency 'cucumber'
   gem.add_dependency 'rspec'
   gem.add_dependency 'nokogiri'
+  gem.add_dependency 'forkoff'
 
 end
