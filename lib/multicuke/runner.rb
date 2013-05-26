@@ -121,7 +121,7 @@ module Multicuke
       if dry_run
         0
       else
-        features_dirs.forkoff!(:processes => forks_pool_size){ |features_dir|
+        results = features_dirs.forkoff!(:processes => forks_pool_size){ |features_dir|
             report_file_path = File.join(reports_path, "#{features_dir.name}.html")
             feature_full_path = File.join(features_root_path, "#{features_dir.name}")
             main_command = %W[bundle exec cucumber #{feature_full_path}]
@@ -130,13 +130,18 @@ module Multicuke
             full_command = main_command + options + extra_options
             result = system_command.run full_command
             puts "Features '#{features_dir.name}' finished. #{result ? 'SUCCESS' : 'FAILURE'} (pid: #{Process.pid})"
-            exit(result)
+            result
         }
-
-        global_exit_status = Process.waitall.inject(0) {|result, process|
-          pid, status = *process
-          result + status.exitstatus
-        }
+        global_exit_status = results.inject(0) { |acc, result|
+          result ? acc : acc +1 
+        } 
+        puts "Global exit status = #{global_exit_status}"
+        #global_exit_status = Process.waitall.inject(0) {|result, process|
+        #  pid, status = *process
+        #  puts "exit status #{status}"
+        #  result + status.exitstatus
+        #}
+        global_exit_status
       end
     end
 
