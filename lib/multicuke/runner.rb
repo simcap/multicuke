@@ -133,14 +133,9 @@ module Multicuke
             result
         }
         global_exit_status = results.inject(0) { |acc, result|
-          result ? acc : acc +1 
-        } 
+          result ? acc : acc +1
+        }
         puts "Global exit status = #{global_exit_status}"
-        #global_exit_status = Process.waitall.inject(0) {|result, process|
-        #  pid, status = *process
-        #  puts "exit status #{status}"
-        #  result + status.exitstatus
-        #}
         global_exit_status
       end
     end
