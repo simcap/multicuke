@@ -34,6 +34,46 @@ module Multicuke
         runner.excluded_dirs.should be_empty
         runner.extra_options.should be_empty
       end
+
+      it "exits with 0 when all features succeed " do
+        system_command_stub = double("SystemCommand")
+        system_command_stub.stub(:run).and_return(true,true)
+        system_command_stub.should_receive(:exit) {0}
+        features_root = File.expand_path("../features", __FILE__)
+        runner = Multicuke::Runner.new(features_root) do |r|
+          r.included_only_dirs = ["addition","division"]
+          r.dry_run = true
+          r.output_path = RESULTS_DIR_PATH
+          r.system_command = system_command_stub
+        end 
+        runner.start
+      end
+      it "exits with 1 when one feature fails " do
+        system_command_stub = double("SystemCommand")
+        system_command_stub.stub(:run).and_return(true,false)
+        system_command_stub.should_receive(:exit) {1}
+        features_root = File.expand_path("../features", __FILE__)
+        runner = Multicuke::Runner.new(features_root) do |r|
+          r.included_only_dirs = ["addition","division"]
+          r.dry_run = true
+          r.output_path = RESULTS_DIR_PATH
+          r.system_command = system_command_stub
+        end 
+        runner.start
+      end
+       it "exits with 2 when two feature fail" do
+        system_command_stub = double("SystemCommand")
+        system_command_stub.stub(:run).and_return(true,false,false)
+        system_command_stub.should_receive(:exit) {2}
+        features_root = File.expand_path("../features", __FILE__)
+        runner = Multicuke::Runner.new(features_root) do |r|
+          r.included_only_dirs = ["addition","division","empty"]
+          r.dry_run = true
+          r.output_path = RESULTS_DIR_PATH
+          r.system_command = system_command_stub
+        end 
+        runner.start
+      end
     end
 
 end
